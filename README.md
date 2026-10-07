@@ -1,1 +1,1 @@
-# colorshift2.0
+# COLOR-SHIFT

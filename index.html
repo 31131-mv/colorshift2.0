@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>COLOR SHIFT - Jogo de Plataforma 2D</title>
+  <meta name="description"
+    content="Color Shift - Jogo 2D de plataforma onde a cor do personagem define quais plataformas ele consegue usar para avançar.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700;800&family=Outfit:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Container principal do jogo -->
+  <div id="game-wrapper">
+    <div id="game-container">
+      <!-- Canvas onde o jogo é renderizado -->
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+      <!-- HUD Superior Durante a Partida -->
+      <div id="hud" class="overlay-hud hidden">
+        <div class="hud-left">
+          <div class="hud-badge level-badge">
+            <span class="hud-label">FASE</span>
+            <span id="hud-level-text" class="hud-val">1/8</span>
+          </div>
+          <div class="hud-badge lives-badge">
+            <span class="hud-label">VIDAS</span>
+            <div id="hud-lives" class="lives-container">
+              <span class="heart filled">♥</span>
+              <span class="heart filled">♥</span>
+              <span class="heart filled">♥</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seletor Rápido de Cores (Clicável ou Teclas 1, 2, 3) -->
+        <div class="hud-center">
+          <div class="color-picker-hud">
+            <button id="btn-color-blue" class="color-btn active" data-color="blue" title="Pressione [ 1 ]">
+              <span class="key-hint">1</span>
+              <span class="color-dot blue"></span>
+              <span class="color-name">AZUL</span>
+            </button>
+            <button id="btn-color-red" class="color-btn" data-color="red" title="Pressione [ 2 ]">
+              <span class="key-hint">2</span>
+              <span class="color-dot red"></span>
+              <span class="color-name">VERMELHO</span>
+            </button>
+            <button id="btn-color-green" class="color-btn" data-color="green" title="Pressione [ 3 ]">
+              <span class="key-hint">3</span>
+              <span class="color-dot green"></span>
+              <span class="color-name">VERDE</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <button id="btn-pause-hud" class="hud-icon-btn" title="Pausar (ESC)">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+            </svg>
+            <span>PAUSAR</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dica Rápida Flutuante de Tutorial no Canvas -->
+      <div id="tutorial-toast" class="tutorial-toast hidden">
+        <span id="tutorial-toast-text">Use A/D ou Setas para mover. Espaço para pular!</span>
+      </div>
+
+      <!-- TELAS E MODAIS -->
+
+      <!-- 1. Menu Principal -->
+      <div id="screen-main-menu" class="screen active">
+        <div class="menu-card glass-panel">
+          <div class="logo-box">
+            <div class="logo-chroma-badge">2D PLATFORMER</div>
+            <h1 class="game-title">
+              <span class="word-color">COLOR</span>
+              <span class="word-shift">SHIFT</span>
+            </h1>
+            <p class="tagline">Mude de cor. Domine as plataformas. Conquiste as 8 fases.</p>
+          </div>
+
+          <div class="menu-buttons">
+            <button id="btn-menu-play" class="btn btn-primary pulse-btn">
+              <span class="btn-icon">▶</span>
+              <span class="btn-text">JOGAR</span>
+            </button>
+            <button id="btn-menu-levels" class="btn btn-secondary">
+              <span class="btn-icon">◈</span>
+              <span class="btn-text">FASES</span>
+            </button>
+            <button id="btn-menu-how" class="btn btn-secondary">
+              <span class="btn-icon">?</span>
+              <span class="btn-text">COMO JOGAR</span>
+            </button>
+          </div>
+
+          <div class="menu-footer">
+            <span>Controles: <strong>A/D</strong> mover • <strong>ESPAÇO</strong> pular • <strong>1/2/3</strong> cores •
+              <strong>ESC</strong> pausar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Seleção de Fases -->
+      <div id="screen-level-select" class="screen hidden">
+        <div class="menu-card glass-panel wider">
+          <div class="screen-header">
+            <h2>SELEÇÃO DE FASES</h2>
+            <p class="subtitle">Complete uma fase para desbloquear a próxima</p>
+          </div>
+
+          <div id="level-grid" class="level-grid">
+            <!-- Gerado via JavaScript: 8 cards de fases -->
+          </div>
+
+          <div class="screen-footer">
+            <button id="btn-back-from-levels" class="btn btn-secondary">
+              <span>← VOLTAR AO MENU</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Como Jogar -->
+      <div id="screen-how-to-play" class="screen hidden">
+        <div class="menu-card glass-panel wider">
+          <div class="screen-header">
+            <h2>COMO JOGAR</h2>
+            <p class="subtitle">Aprenda a mecânica única de Color Shift</p>
+          </div>
+
+          <div class="how-grid">
+            <div class="how-card">
+              <div class="how-icon">⇄</div>
+              <h3>MOVIMENTO</h3>
+              <p>Use as teclas <strong>A</strong> e <strong>D</strong> ou <strong>SETAS (← →)</strong> para se mover
+                para esquerda e direita.</p>
+            </div>
+            <div class="how-card">
+              <div class="how-icon">↑</div>
+              <h3>PULO</h3>
+              <p>Pressione <strong>ESPAÇO</strong> para pular. O pulo alcança todas as plataformas necessárias de cada
+                fase.</p>
+            </div>
+            <div class="how-card highlight-card">
+              <div class="how-icon">🎨</div>
+              <h3>TROCA DE COR</h3>
+              <p>Pressione <strong>1</strong> (Azul), <strong>2</strong> (Vermelho) ou <strong>3</strong> (Verde). A
+                plataforma só é <strong>SÓLIDA</strong> se você tiver a mesma cor dela!</p>
+            </div>
+            <div class="how-card">
+              <div class="how-icon">🚪</div>
+              <h3>OBJETIVO</h3>
+              <p>Atravesse as plataformas coloridas, evite os espinhos e alcance a <strong>PORTA/SAÍDA</strong> no final
+                de cada fase.</p>
+            </div>
+          </div>
+
+          <div class="screen-footer">
+            <button id="btn-back-from-how" class="btn btn-secondary">
+              <span>← VOLTAR AO MENU</span>
+            </button>
+            <button id="btn-play-from-how" class="btn btn-primary">
+              <span>JOGAR AGORA ▶</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Menu de Pausa -->
+      <div id="modal-pause" class="screen modal hidden">
+        <div class="modal-card glass-panel">
+          <div class="modal-header">
+            <span class="pause-tag">JOGO EM ESPERA</span>
+            <h2>PAUSADO</h2>
+          </div>
+          <div class="menu-buttons">
+            <button id="btn-pause-resume" class="btn btn-primary">
+              <span class="btn-icon">▶</span>
+              <span class="btn-text">CONTINUAR</span>
+            </button>
+            <button id="btn-pause-restart" class="btn btn-secondary">
+              <span class="btn-icon">↻</span>
+              <span class="btn-text">REINICIAR FASE</span>
+            </button>
+            <button id="btn-pause-menu" class="btn btn-secondary">
+              <span class="btn-icon">⌂</span>
+              <span class="btn-text">MENU PRINCIPAL</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Modal de Game Over -->
+      <div id="modal-game-over" class="screen modal hidden">
+        <div class="modal-card glass-panel danger-theme">
+          <div class="modal-header">
+            <div class="danger-icon">☠</div>
+            <h2 class="danger-text">GAME OVER</h2>
+            <p>Você perdeu todas as vidas!</p>
+          </div>
+          <div class="menu-buttons">
+            <button id="btn-gameover-restart" class="btn btn-primary pulse-danger">
+              <span class="btn-icon">↻</span>
+              <span class="btn-text">REINICIAR FASE</span>
+            </button>
+            <button id="btn-gameover-menu" class="btn btn-secondary">
+              <span class="btn-icon">⌂</span>
+              <span class="btn-text">MENU</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Modal de Vitória de Fase -->
+      <div id="modal-level-win" class="screen modal hidden">
+        <div class="modal-card glass-panel win-theme">
+          <div class="modal-header">
+            <div class="win-icon">★</div>
+            <h2 id="win-title">FASE 1 CONCLUÍDA!</h2>
+            <p id="win-desc">Excelente trabalho! A próxima fase foi desbloqueada.</p>
+          </div>
+          <div class="win-stats">
+            <div class="stat-box">
+              <span class="stat-label">Vidas Restantes</span>
+              <span id="win-lives-stat" class="stat-val">♥ ♥ ♥</span>
+            </div>
+          </div>
+          <div class="menu-buttons">
+            <button id="btn-win-next" class="btn btn-primary pulse-btn">
+              <span class="btn-text">PRÓXIMA FASE ▶</span>
+            </button>
+            <button id="btn-win-menu" class="btn btn-secondary">
+              <span class="btn-text">MENU</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Modal de Vitória Final (Fase 8) -->
+      <div id="modal-game-win" class="screen modal hidden">
+        <div class="modal-card glass-panel final-win-theme">
+          <div class="modal-header">
+            <div class="final-trophy">🏆</div>
+            <h2 class="victory-title">VOCÊ VENCEU!</h2>
+            <p class="victory-subtitle">COLOR SHIFT COMPLETADO</p>
+          </div>
+          <div class="menu-buttons">
+            <button id="btn-final-menu" class="btn btn-primary pulse-btn">
+              <span class="btn-icon">⌂</span>
+              <span class="btn-text">VOLTAR AO MENU</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
